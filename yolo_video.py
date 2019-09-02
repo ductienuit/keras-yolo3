@@ -2,6 +2,7 @@ import sys
 import argparse
 from yolo import YOLO, detect_video
 from PIL import Image
+from keras import backend as K
 
 def detect_img(yolo):
     while True:
@@ -60,6 +61,7 @@ if __name__ == '__main__':
         "--output", nargs='?', type=str, default="",
         help = "[Optional] Video output path"
     )
+    K.clear_session()
 
     FLAGS = parser.parse_args()
 
