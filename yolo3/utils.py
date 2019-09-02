@@ -4,6 +4,17 @@ from functools import reduce
 
 from PIL import Image
 import numpy as np
+
+
+from yolo3.data_aug import *
+from yolo3.bbox_util import *
+import numpy as np 
+import cv2 
+import matplotlib.pyplot as plt 
+import pickle as pkl
+
+
+
 from matplotlib.colors import rgb_to_hsv, hsv_to_rgb
 
 def compose(*funcs):
@@ -68,7 +79,7 @@ def get_random_data(annotation_line, input_shape, random=True, max_boxes=20, jit
 
     # resize image
     new_ar = w/h * rand(1-jitter,1+jitter)/rand(1-jitter,1+jitter)
-    scale = rand(.25, 2)
+    scale = rand(0.5, 2)
     if new_ar < 1:
         nh = int(scale*h)
         nw = int(nh*new_ar)
@@ -102,6 +113,10 @@ def get_random_data(annotation_line, input_shape, random=True, max_boxes=20, jit
     x[x<0] = 0
     image_data = hsv_to_rgb(x) # numpy array, 0 to 1
 
+    rotate_image = ["uav0000248_00001_v",
+                    "uav0000289_06922_v",
+                    "uav0000326_01035_v"]
+
     # correct boxes
     box_data = np.zeros((max_boxes,5))
     if len(box)>0:
@@ -117,5 +132,23 @@ def get_random_data(annotation_line, input_shape, random=True, max_boxes=20, jit
         box = box[np.logical_and(box_w>1, box_h>1)] # discard invalid box
         if len(box)>max_boxes: box = box[:max_boxes]
         box_data[:len(box)] = box
+        for str in rotate_image:
+            if str in line[0]:
+                seq = Sequence([RandomRotate(290)])
+#                 print("Thu 1: ",(box_data[..., 4]))
+                image_data, box_data = seq(image_data.copy(), box_data.copy()) 
+#                 print("Thu 2: ",(box_data[..., 4]))
+                len_box = len(box_data)
+                if len_box<max_boxes:
+                    temp = np.zeros((max_boxes,5))
+#                     temp[len_box,:]=box_data[...,:]
+                    temp[:box_data.shape[0],:box_data.shape[1]] = box_data
+                    box_data = temp
+#                 plotted_img = draw_rect(image_data, box_data)
+#                 plt.imshow(plotted_img)
+#                 plt.show()
+#                     print("Thu 3 ",temp)
+#                 print("Thu 2: ",(box_data[..., 4]))
+                
 
     return image_data, box_data
